@@ -358,6 +358,34 @@ class AttackInputDataTest(parameterized.TestCase):
     np.testing.assert_equal(attack_input.get_loss_test().tolist(),
                             np.array([[1.0, 4.0, 6.0], [1.0, 2.0, 3.0]]))
 
+  def test_validate_fails_force_multilabel_true(self):
+    with self.subTest(
+        '"force_multilabel_data" flag is False with single-label data but '
+        '"validate()" passed.'):
+      attack_input = AttackInputData(
+          probs_train=np.array([[0.2, 0.3, 0.7], [0.8, 0.6, 0.9]]),
+          probs_test=np.array([[0.8, 0.7, 0.9]]),
+          labels_train=np.array([[0, 0, 1], [0, 1, 0]]),
+          labels_test=np.array([[1, 0, 0]]))
+      # 'force_multilabel_data' is False by default, so don't need to set it.
+      self.assertRaisesRegex(ValueError,
+                             r'should be a one dimensional numpy array.',
+                             attack_input.validate)
+    with self.subTest(
+        '"force_multilabel_data" flag is True with single-label data but '
+        '"validate()" failed.'):
+      attack_input = AttackInputData(
+          probs_train=np.array([[0.2, 0.3, 0.7], [0.8, 0.6, 0.9]]),
+          probs_test=np.array([[0.8, 0.7, 0.9]]),
+          labels_train=np.array([[0, 0, 1], [0, 1, 0]]),
+          labels_test=np.array([[1, 0, 0]]),
+          force_multilabel_data=True)
+      # 'force_multilabel_data' is set to True.
+      try:
+        attack_input.validate()
+      except ValueError:
+        self.fail('ValueError not raised by validate().')
+
 
 class RocCurveTest(absltest.TestCase):
 
